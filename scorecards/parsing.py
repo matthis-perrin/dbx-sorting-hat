@@ -5,19 +5,7 @@ import numpy as np
 GREENHOUSE_CSV_DIR = './greenhouse_csv/'
 
 INTERVIEW_DESCRIPTIONS = {
-  'debrief': [
-    '*Debrief (Attendance Only)*',
-    '*Debrief - Mod Decision*',
-    '*Debrief Decision*',
-    '*Debrief*',
-    'Debrief - Mod Decision EPD',
-    'Debrief - Mod Decision EPD*',
-    'Debrief - Mod Decision',
-    'Debrief Decision',
-    'Debrief',
-  ],
   'phone_interview': [
-    '*2nd Phone Interview - Cat 4 Coding - Shadow',
     '*2nd Phone Interview - Cat 4 Coding',
     '*2nd Phone Interview - Reverse Shadow',
     '*2nd Phone Screen',
@@ -57,20 +45,20 @@ INTERVIEW_DESCRIPTIONS = {
   ],
 }
 
-ALL_INTERVIEW_DESCRIPTIONS = INTERVIEW_DESCRIPTIONS['debrief'] + INTERVIEW_DESCRIPTIONS['phone_interview'] + INTERVIEW_DESCRIPTIONS['recruiting_screen']
+ALL_INTERVIEW_DESCRIPTIONS = INTERVIEW_DESCRIPTIONS['phone_interview'] + INTERVIEW_DESCRIPTIONS['recruiting_screen']
 
 
 # --- Loading files ---
 ## Input
 scorecard_attributes = pd.read_csv(
     GREENHOUSE_CSV_DIR + 'scorecard_attributes.csv',
-    usecols=['Application Id', 'Attribute Name', 'Attribute Rating'],
+    usecols=['Application Id', 'Attribute Name', 'Attribute Rating', 'Scorecard Id'],
     encoding="ISO-8859-1"
 )
 
 scorecards = pd.read_csv(
     GREENHOUSE_CSV_DIR + 'scorecards.csv',
-    usecols=['Application Id', 'Interview Desc', 'Overall Recommendation'],
+    usecols=['Application Id', 'Interview Desc', 'Overall Recommendation', 'Scorecard Id'],
     encoding="ISO-8859-1"
 ) # We want the scorecards of the applications who Application_id & Interview Desc = Phone Interview / Recruiting Screen / 2nd Phone Interview
 
@@ -128,13 +116,12 @@ class Application:
                       s['Overall Recommendation'] != 'no_decision'
                   )]
         self.overall_recommendations = [(s['Overall Recommendation'], s['Interview Desc']) for s in series]
-        recommendation_stats = {'debrief': 0, 'phone_interview': 0, 'recruiting_screen': 0}
+        recommendation_stats = {'phone_interview': 0, 'recruiting_screen': 0}
         for s in series:
-            for type in ('debrief', 'phone_interview', 'recruiting_screen'):
+            for type in ('phone_interview', 'recruiting_screen'):
                 if s['Interview Desc'] in INTERVIEW_DESCRIPTIONS[type]:
                     recommendation_stats[type] += 1
-        recommendation_stats_string = '{}-{}-{}'.format(
-            recommendation_stats['debrief'],
+        recommendation_stats_string = '{}-{}'.format(
             recommendation_stats['phone_interview'],
             recommendation_stats['recruiting_screen'],
         )
@@ -157,7 +144,9 @@ applications = []
 for index, row in data.items():
     applications.append(Application(row))
 
-print(sorted(recommendation_stats_strings.values(), key=lambda stat: stat['count'], reverse=True))
+import json
+sorted_recommendations = sorted(recommendation_stats_strings.values(), key=lambda stat: stat['count'], reverse=True)
+print(json.dumps(sorted_recommendations, indent=2))
 
 # print(applications[0].attributes)
 print(applications[0].overall_recommendations)
